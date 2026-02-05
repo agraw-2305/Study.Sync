@@ -19,18 +19,18 @@ def notes(req: VideoRequest):
 
 
 @router.post("/flashcards")
-def flashcards(req: VideoRequest):
-    try:
-        transcript = fetch_transcript(req.url)
-        return {"flashcards": generate_flashcards(transcript)}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+def flashcards(req: VideoRequest, count: int = 10):
+    transcript = fetch_transcript(req.url)
+    return {
+        "flashcards": generate_flashcards(transcript, count)
+    }
+
 
 
 @router.post("/quiz")
-def quiz(req: VideoRequest):
-    try:
-        transcript = fetch_transcript(req.url)
-        return {"quiz": generate_quiz(transcript)}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+def quiz(req: VideoRequest, count: int = 5):
+    transcript = fetch_transcript(req.url)
+    return {
+        "quiz": generate_quiz(transcript, count)
+    }
+
