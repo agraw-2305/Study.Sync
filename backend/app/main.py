@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import router
 
-app = FastAPI(title="StudySynth Backend", version="1.0")
+app = FastAPI(title="Study.Sync Backend", version="1.0")
 
 app.add_middleware(
     CORSMiddleware,

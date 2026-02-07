@@ -4,3 +4,4 @@ python-dotenv
 youtube-transcript-api
 pydantic
 groq
+yt-dlp

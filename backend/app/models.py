@@ -1,8 +1,9 @@
-from pydantic import BaseModel, HttpUrl
-from typing import List
+from pydantic import BaseModel
+from typing import List, Optional
 
 class VideoRequest(BaseModel):
-    url: HttpUrl
+    url: Optional[str] = None
+    transcript: Optional[str] = None
 
 class Flashcard(BaseModel):
     question: str

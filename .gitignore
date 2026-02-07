@@ -4,6 +4,7 @@ __pycache__/
 *.pyc
 venv/
 env/
+.venv/
 
 # IDE
 .vscode/
@@ -19,6 +20,10 @@ Thumbs.db
 dist/
 build/
 *.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
 
 # Environment variables
 .env
