@@ -1,137 +1,162 @@
 # 📘 Study.Sync
 
-**Study.Sync** is an AI-powered learning assistant that transforms **YouTube lectures or uploaded transcripts** into clear, structured study materials.  
-It generates **organized notes, interactive flashcards, and practice quizzes**, helping learners move from passive watching to active understanding.
+Study.Sync is an AI-powered learning assistant that transforms YouTube lectures or user-provided transcripts into structured, exam-ready study materials.
 
-Built with a **FastAPI backend**, **Next.js frontend**, and powered by **Groq LLMs**, Study.Sync is designed to handle real-world challenges like **YouTube transcript limits** gracefully.
+It helps learners move from passive video consumption to active learning by automatically generating:
+
+- 📑 Clear, organized notes
+- 🃏 Revision-focused flashcards
+- 🧪 Practice quizzes for self-assessment
+
+Built with a FastAPI backend, Next.js frontend, and powered by Groq LLMs, Study.Sync is designed with real-world reliability, fallback handling, and scalability in mind.
 
 ---
 
 ## 📑 Table of Contents
 
-- [Overview](#overview)
-- [Motivation and Use Cases](#motivation-and-use-cases)
-- [What Study.Sync Is (and Is Not)](#what-studysync-is-and-is-not)
-- [Key Features](#key-features)
-- [How It Works](#how-it-works)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
+- [Overview](#-overview)
+- [Why Study.Sync?](#-why-studysync)
+- [Core Philosophy](#-core-philosophy)
+- [Key Features](#-key-features)
+- [System Workflow](#-system-workflow)
+- [Tech Stack](#-tech-stack)
+- [Project Structure](#-project-structure)
+- [Getting Started](#-getting-started)
+  - [Prerequisites](#prerequisites)
   - [Backend Setup](#backend-setup)
   - [Frontend Setup](#frontend-setup)
-  - [Configuration](#configuration)
-- [API Reference](#api-reference)
-- [Usage Notes](#usage-notes)
-- [Troubleshooting](#troubleshooting)
-- [Limitations](#limitations)
-- [Security and Privacy](#security-and-privacy)
-- [Extensibility](#extensibility)
-- [Contributing](#contributing)
-- [License](#license)
+  - [Environment Configuration](#environment-configuration)
+- [API Reference](#-api-reference)
+- [Usage Guidelines](#-usage-guidelines)
+- [Error Handling and Reliability](#-error-handling-and-reliability)
+- [Security and Privacy](#-security-and-privacy)
+- [Future Enhancements](#-future-enhancements)
+- [Contributing](#-contributing)
+- [License](#-license)
 
 ---
 
 ## 🔍 Overview
 
-Study.Sync is built for students and self-learners who rely on long-form video lectures but struggle with note-taking, revision, and self-assessment.
+Study.Sync is built for students, self-learners, and developers who rely heavily on long-form educational videos but want a faster and more structured learning workflow.
 
-Instead of rewatching videos, Study.Sync extracts key ideas and converts them into **actionable learning assets**—notes for understanding, flashcards for revision, and quizzes for recall.
+Instead of:
 
-> 🎯 Focused on **structured learning outputs**, not free-form chat.
+- Rewatching hours of lectures
+- Manually taking notes
+- Creating flashcards from scratch
 
----
+Study.Sync converts lecture content into ready-to-use learning assets that support understanding, revision, and recall.
 
-## 🎯 Motivation and Use Cases
-
-Learning from videos is often inefficient due to:
-- Constant pausing to take notes
-- Rewatching entire lectures before exams
-- Manually creating flashcards or quizzes
-- Missing or blocked YouTube transcripts
-
-Study.Sync helps by:
-- ⏱️ Saving time with AI-generated materials
-- 🧠 Improving retention through active recall
-- 🔁 Providing transcript upload fallback
-- 🧩 Handling real-world API limitations
-
-### Example Use Cases
-- 📚 University lecture revision  
-- 🧪 Exam preparation from tutorials  
-- 💻 Learning technical concepts  
-- 📝 Studying when captions are unavailable  
+> 🎯 Study.Sync focuses on learning outputs, not conversational chat.
 
 ---
 
-## ❓ What Study.Sync Is (and Is Not)
+## ❓ Why Study.Sync?
 
-### ✅ Study.Sync IS
-- A structured learning material generator
-- A notes + flashcards + quiz tool
-- Reliable and fallback-aware
-- Designed for real student workflows
+Learning from videos is powerful, but inefficient without structure.
 
-### ❌ Study.Sync IS NOT
-- A chatbot or conversational tutor
-- A video downloader
-- A plagiarism or answer generator
-- A replacement for learning itself
+### Common Problems
+
+- ⏸️ Constant pausing to write notes
+- 🔁 Rewatching the same sections before exams
+- 📝 Manually creating flashcards and quizzes
+- 🚫 Missing or temporarily blocked YouTube captions
+
+### How Study.Sync Helps
+
+- ⚡ Converts videos into structured content instantly
+- 🧠 Reinforces learning using active recall
+- 🔄 Supports transcript upload as a fallback
+- 🧩 Handles real-world API and transcript issues gracefully
+
+---
+
+## 🧠 Core Philosophy
+
+Study.Sync is designed around these principles:
+
+- Structure over conversation
+- Learning assistance, not shortcuts
+- Reliability over novelty
+- Local-first and self-host friendly
+
+### What Study.Sync Is
+
+- ✅ A structured study material generator
+- ✅ A notes + flashcards + quiz system
+- ✅ A tool built for real academic workflows
+
+### What Study.Sync Is Not
+
+- ❌ A chatbot or tutoring replacement
+- ❌ A video downloader
+- ❌ An answer-spitting exam solver
 
 ---
 
 ## ✨ Key Features
 
-### 🔗 Flexible Input
-- YouTube URL (with captions)
-- Manual transcript upload or paste (`.txt`, `.srt`)
+### 🔗 Flexible Input Options
+
+- YouTube URLs (with captions enabled)
+- Manual transcript paste or upload (.txt, .srt)
 
 ### 📝 Structured Notes
-- Clear sections
+
+- Topic-wise sections
 - Concept-focused summaries
+- Clean formatting for revision
 
 ### 🃏 Flashcards
+
 - Question–answer format
-- Optimized for revision
+- Optimized for spaced repetition
 - Regeneratable on demand
 
 ### 🧪 Practice Quizzes
-- MCQ-based assessment
+
+- Multiple-choice questions (MCQs)
 - Adjustable question count
-- Designed for understanding
+- Designed to test understanding, not memorization
 
 ### 🛡️ Reliability by Design
-- Graceful handling of YouTube limits
-- Chunked processing for long transcripts
-- Clear, user-friendly error states
+
+- Graceful handling of transcript failures
+- Chunked processing for long videos
+- Clear and actionable error messages
 
 ---
 
-## ⚙️ How It Works
+## ⚙️ System Workflow
 
-1. User provides a YouTube URL **or** uploads a transcript
-2. Backend fetches captions with fallback logic
-3. Transcript is cleaned and chunked
+1. User provides a YouTube URL or uploads a transcript
+2. Backend attempts caption extraction with fallback logic
+3. Transcript is cleaned, normalized, and chunked
 4. Groq LLM generates:
-   - Notes
+   - Structured notes
    - Flashcards
    - Quiz questions
-5. Frontend displays results in a clean UI
+5. Frontend renders results in a clean, distraction-free UI
 
 ---
 
 ## 🧰 Tech Stack
 
 ### Frontend
+
 - Next.js (App Router)
 - React
 - Tailwind CSS
 
 ### Backend
+
 - Python
 - FastAPI
 - Uvicorn
 
-### AI
+### AI and Processing
+
 - Groq API
 - LLaMA 3.1 8B Instant
 
@@ -143,19 +168,21 @@ Study.Sync helps by:
 studysync/
 ├── backend/
 │   ├── app/
-│   │   ├── main.py                  # FastAPI app and CORS
+│   │   ├── main.py                  # FastAPI app + CORS
 │   │   ├── routes.py                # Notes, flashcards, quiz APIs
 │   │   └── services/
-│   │       ├── groq_service.py      # LLM calls and parsing
-│   │       └── transcript_service.py# YouTube and fallback logic
+│   │       ├── groq_service.py      # LLM prompts and parsing
+│   │       └── transcript_service.py# YouTube + fallback handling
 │   └── requirements.txt
+│
 ├── frontend/
 │   ├── app/
 │   │   ├── page.tsx                 # Main UI
 │   │   └── api/
-│   │       └── */route.ts           # API proxy routes
+│   │       └── */route.ts           # Backend proxy routes
 │   ├── components/
 │   └── package.json
+│
 └── README.md
 ```
 
@@ -168,9 +195,7 @@ studysync/
 - Node.js 20+
 - pnpm
 - Python 3.11+
-- Groq API key
-
----
+- Groq API Key
 
 ### Backend Setup
 
@@ -181,7 +206,7 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Create backend/.env:
+Create .env inside backend/:
 
 ```bash
 GROQ_API_KEY=your_groq_api_key_here
@@ -193,9 +218,9 @@ Run the backend:
 uvicorn app.main:app --reload --port 8000
 ```
 
-Swagger UI: http://127.0.0.1:8000/docs
+API Docs:
 
----
+- http://127.0.0.1:8000/docs
 
 ### Frontend Setup
 
@@ -205,11 +230,11 @@ pnpm install
 pnpm dev
 ```
 
-App URL: http://localhost:3000
+Open the app:
 
----
+- http://localhost:3000
 
-### Configuration
+### Environment Configuration
 
 ```bash
 NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:8000
@@ -250,45 +275,43 @@ All endpoints accept either a YouTube URL or a transcript.
 
 ---
 
-## 📝 Usage Notes
+## 🧭 Usage Guidelines
 
-- If captions fail, upload a transcript directly.
-- Flashcards: 10 or 20 items (UI).
-- Quizzes: 5 or 10 questions (UI).
-- Long transcripts are chunked automatically.
-
----
-
-## 🛠 Troubleshooting
-
-- Missing API key: check backend/.env and restart the backend.
-- Transcript error: try another video or upload a transcript.
-- Network error: ensure the backend runs on port 8000.
+- Upload a transcript if captions are unavailable
+- Flashcards: typically 10–20 per session
+- Quizzes: typically 5–15 questions
+- Long transcripts are processed in chunks automatically
 
 ---
 
-## ⚠️ Limitations
+## 🛠 Error Handling and Reliability
 
-- Depends on caption availability for YouTube.
-- Quiz quality depends on transcript clarity.
-- No user accounts or persistence yet.
+Study.Sync is designed to handle:
+
+- Temporary YouTube transcript blocks
+- Long or noisy transcripts
+- API failures with clear user feedback
+
+All failures return actionable error messages, not silent crashes.
 
 ---
 
 ## 🔒 Security and Privacy
 
-- No user authentication required.
-- No personal data storage.
-- Designed for local or self-hosted usage.
+- No authentication required
+- No user data storage
+- No transcripts are persisted
+- Designed for local and self-hosted usage
 
 ---
 
-## 🔧 Extensibility
+## 🔮 Future Enhancements
 
-- Add PDF or article support
-- Swap or upgrade LLMs
-- Export to PDF, Anki, or Notion
-- Add learning history and personalization
+- PDF and article input support
+- Export to Anki, Notion, or PDF
+- Learning history and personalization
+- Multi-language support
+- User accounts (optional)
 
 ---
 
@@ -296,13 +319,14 @@ All endpoints accept either a YouTube URL or a transcript.
 
 Contributions are welcome.
 
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Open a pull request
+- Fork the repository
+- Create a feature branch
+- Commit your changes
+- Open a pull request
 
 ---
 
 ## 📄 License
 
-Licensed under the MIT License. See the LICENSE file for details.
+Licensed under the MIT License.
+See the LICENSE file for details.
