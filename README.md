@@ -329,4 +329,4 @@ Contributions are welcome.
 ## 📄 License
 
 Licensed under the MIT License.
-See the LICENSE file for details.
+
