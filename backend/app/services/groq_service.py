@@ -5,6 +5,7 @@ import time
 import hashlib
 import re
 from typing import Any, List, Optional
+from threading import Lock
 
 client = Groq(api_key=GROQ_API_KEY)
 
@@ -16,6 +17,7 @@ _MAX_TRANSCRIPT_CHARS = 15000
 _MAX_SUMMARY_CHARS = 9000
 
 _SUMMARY_CACHE = {}
+_SUMMARY_LOCKS = {}
 _NOTES_CACHE = {}
 _FLASHCARDS_CACHE = {}
 _QUIZ_CACHE = {}
@@ -175,48 +177,55 @@ def _summarize_transcript(transcript: str) -> str:
     if cached:
         return cached
 
-    # Very long transcripts: do a single-call sampled summary to avoid many LLM calls.
-    if len(transcript) > _MAX_TRANSCRIPT_CHARS * 4:
-        sampled = _sample_text(transcript, _MAX_TRANSCRIPT_CHARS)
-        prompt = f"""Create very detailed study notes in bullet-point format.
+    lock = _SUMMARY_LOCKS.setdefault(key, Lock())
+    with lock:
+        cached = _SUMMARY_CACHE.get(key)
+        if cached:
+            return cached
+
+        # Very long transcripts: do a single-call sampled summary to avoid many LLM calls.
+        if len(transcript) > _MAX_TRANSCRIPT_CHARS * 4:
+            sampled = _sample_text(transcript, _MAX_TRANSCRIPT_CHARS)
+            prompt = f"""Create very detailed study notes in bullet-point format.
     Use headings with bullet points and sub-bullets. Include definitions, steps, formulas, examples, and key terms.
     Expand each main bullet with 1-2 supporting sub-bullets. Avoid paragraphs.
 
 Sample:
 {sampled}
 """
-        result = _ask_groq(prompt)
-        _SUMMARY_CACHE[key] = result
-        return result
+            result = _ask_groq(prompt)
+            _SUMMARY_CACHE[key] = result
+            return result
 
-    chunks = _chunk_text(transcript, _MAX_TRANSCRIPT_CHARS)
-    if not chunks:
-        return transcript
+        chunks = _chunk_text(transcript, _MAX_TRANSCRIPT_CHARS)
+        if not chunks:
+            return transcript
 
-    summaries: List[str] = []
-    for idx, chunk in enumerate(chunks, start=1):
-        prompt = f"""Summarize chunk {idx}/{len(chunks)} into very detailed study bullets.
+        summaries: List[str] = []
+        for idx, chunk in enumerate(chunks, start=1):
+            prompt = f"""Summarize chunk {idx}/{len(chunks)} into very detailed study bullets.
     Keep definitions, steps, formulas, examples, and key terms. Use sub-bullets. No filler.
 
 Text:
 {chunk}
 """
-        summaries.append(_ask_groq(prompt))
+            summaries.append(_ask_groq(prompt))
 
-    combined = "\n\n".join(summaries).strip()
-    if len(combined) <= _MAX_SUMMARY_CHARS:
-        return combined
+        combined = "\n\n".join(summaries).strip()
+        if len(combined) <= _MAX_SUMMARY_CHARS:
+            _SUMMARY_CACHE[key] = combined
+            return combined
 
-    # One more compression pass if needed.
-    compress_prompt = f"""Compress into one clean outline with headings + bullets.
+        # One more compression pass if needed.
+        compress_prompt = f"""Compress into one clean outline with headings + bullets.
 Keep key points; use bullet points only and keep sub-bullets where needed.
 
 Summaries:
 {combined}
 """
-    final_summary = _ask_groq(compress_prompt)
-    _SUMMARY_CACHE[key] = final_summary
-    return final_summary
+        final_summary = _ask_groq(compress_prompt)
+        _SUMMARY_CACHE[key] = final_summary
+        return final_summary
 
 
 def generate_notes(transcript: str) -> str:
@@ -245,6 +254,44 @@ Transcript:
 
 
 
+def _normalize_flashcards(cards: Any) -> List[dict]:
+    if not isinstance(cards, list):
+        return []
+    normalized: List[dict] = []
+    for item in cards:
+        if not isinstance(item, dict):
+            continue
+        question = item.get("question")
+        answer = item.get("answer")
+        if isinstance(question, str) and isinstance(answer, str):
+            normalized.append({"question": question.strip(), "answer": answer.strip()})
+    return normalized
+
+
+def _normalize_quiz(items: Any) -> List[dict]:
+    if not isinstance(items, list):
+        return []
+    normalized: List[dict] = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        question = item.get("question")
+        options = item.get("options")
+        correct = item.get("correct_answer")
+        if not isinstance(question, str):
+            continue
+        if not (isinstance(options, list) and len(options) == 4 and all(isinstance(opt, str) for opt in options)):
+            continue
+        if correct not in ("A", "B", "C", "D"):
+            continue
+        normalized.append({
+            "question": question.strip(),
+            "options": [opt.strip() for opt in options],
+            "correct_answer": correct,
+        })
+    return normalized
+
+
 def generate_flashcards(transcript: str, count: int = 10):
     count = max(10, min(count, 20))  # enforce limits
 
@@ -268,7 +315,23 @@ Transcript:
     schema_hint = """[
   {"question": "string", "answer": "string"}
 ]"""
-    cards = _ask_groq_json(prompt, schema_hint)
+    cards = _normalize_flashcards(_ask_groq_json(prompt, schema_hint))
+
+    # If the model returns fewer than requested, ask for the remaining cards.
+    if len(cards) < count:
+        remaining = count - len(cards)
+        followup_prompt = f"""Generate exactly {remaining} NEW flashcards as JSON.
+Return only new cards not already provided. Avoid repeats.
+
+Format: [{{\"question\":\"...\",\"answer\":\"...\"}}, ...]
+
+Transcript:
+{transcript}
+"""
+        more_cards = _normalize_flashcards(_ask_groq_json(followup_prompt, schema_hint))
+        cards.extend(more_cards)
+
+    cards = cards[:count]
     _FLASHCARDS_CACHE[cache_key] = cards
     return cards
 
@@ -298,8 +361,27 @@ Transcript:
 {transcript}
 """
     schema_hint = """[
-  {"question": "string", "options": ["string", "string", "string", "string"], "correct_answer": "A"}
+    {"question": "string", "options": ["string", "string", "string", "string"], "correct_answer": "A"}
 ]"""
-    quiz = _ask_groq_json(prompt, schema_hint)
+    quiz = _normalize_quiz(_ask_groq_json(prompt, schema_hint))
+
+    if len(quiz) < count:
+        remaining = count - len(quiz)
+        followup_prompt = f"""Create exactly {remaining} NEW MCQs as JSON.
+Return only new questions not already provided. Avoid repeats.
+
+Rules:
+- Provide 4 answer choices as full text strings.
+- "correct_answer" must be one of "A", "B", "C", "D".
+
+Format: [{{"question":"...","options":["...","...","...","..."],"correct_answer":"A"}}, ...]
+
+Transcript:
+{transcript}
+"""
+        more_quiz = _normalize_quiz(_ask_groq_json(followup_prompt, schema_hint))
+        quiz.extend(more_quiz)
+
+    quiz = quiz[:count]
     _QUIZ_CACHE[cache_key] = quiz
     return quiz
